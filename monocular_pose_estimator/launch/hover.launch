@@ -1,0 +1,46 @@
+<launch> 
+
+	<!-- Name of the YAML file containing the marker positions -->
+	<arg name="YAML_file_name" default="hover_marker_positions"/>
+
+	<!-- File containing the the marker positions in the trackable's frame of reference -->
+	<arg name="marker_positions_file" default="$(find monocular_pose_estimator)/marker_positions/$(arg YAML_file_name).yaml"/> 
+
+	<group ns="monocular_pose_estimator" >
+		<node name="monocular_pose_estimator" pkg="monocular_pose_estimator" type="monocular_pose_estimator" respawn="false"> 
+			<rosparam command="load" file="$(arg marker_positions_file)"/>
+			<param name= "threshold_value" value = "220" />
+			<param name= "gaussian_sigma" value = "0.6" />
+			<param name= "min_blob_area" value = "10" />
+			<param name= "max_blob_area" value = "200" />
+			<param name= "max_width_height_distortion" value = "0.5" />
+			<param name= "max_circular_distortion" value = "0.5" />
+			<param name= "back_projection_pixel_tolerance" value = "3" />
+			<param name= "nearest_neighbour_pixel_tolerance" value = "5" />
+			<param name= "certainty_threshold" value = "0.75" />
+			<param name= "valid_correspondence_threshold" value = "0.7" />
+		</node>
+	
+		<node name="view_visualisation_image" pkg="image_view" type="image_view" args="image:=/monocular_pose_estimator/image_with_detections" />
+	</group>
+
+	<node pkg="usb_cam" type="usb_cam_node" name="camera_node" output="screen" >
+		<param name="video_device" type="string" value="/dev/video0"/>
+		<param name="image_width" type="int" value="1024" />
+		<param name="image_height" type="int" value="768" />
+		<param name="pixel_format" type="string" value="yuyv"/>
+		<param name="name" type="string" value="tracker_camera"/>
+	</node>
+
+
+<node pkg="monocular_pose_estimator" type="threshold_image.py" name="image_convert" output="screen" respawn="false" >
+	</node>
+	
+<node name="raw_image" pkg="image_view" type="image_view" args="image:=/camera_node/image_raw" />
+
+<!-- <node name="binary_image" pkg="image_view" type="image_view" args="image:=/binary_image" /> -->
+
+
+	<!-- rosbag play 
+	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/>     -->
+</launch>
