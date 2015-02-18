@@ -2,6 +2,8 @@
 #
 marker_positions:
   - x: 0.0714197
+  #introducing error to see how sensitive the algorithm is
+  # - x: 0.065
     y: 0.0800214
     z: 0.0622611
   - x: 0.0400755

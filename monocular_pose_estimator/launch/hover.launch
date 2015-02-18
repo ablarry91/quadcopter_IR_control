@@ -26,15 +26,15 @@
 
 	<node pkg="usb_cam" type="usb_cam_node" name="camera_node" output="screen" >
 		<param name="video_device" type="string" value="/dev/video0"/>
-		<param name="image_width" type="int" value="1024" />
-		<param name="image_height" type="int" value="768" />
+		<param name="image_width" type="int" value="640" />
+		<param name="image_height" type="int" value="480" />
 		<param name="pixel_format" type="string" value="yuyv"/>
 		<param name="name" type="string" value="tracker_camera"/>
 	</node>
 
 
-<node pkg="monocular_pose_estimator" type="threshold_image.py" name="image_convert" output="screen" respawn="false" >
-	</node>
+<!-- <node pkg="monocular_pose_estimator" type="threshold_image.py" name="image_convert" output="screen" respawn="false" >
+	</node> -->
 	
 <node name="raw_image" pkg="image_view" type="image_view" args="image:=/camera_node/image_raw" />
 
