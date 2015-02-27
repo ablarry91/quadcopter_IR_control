@@ -27,5 +27,5 @@
 
 	<!-- rosbag play -->
 	<!-- <node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/> -->
-	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/hoverIR.bag"/>
+	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/>
 </launch>
