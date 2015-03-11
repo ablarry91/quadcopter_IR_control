@@ -5,11 +5,20 @@ from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 target = Pose()
 target.position.x = 0
 target.position.y = 0
-target.position.z = .5
+target.position.z = .32
 target.orientation.x = 0
 target.orientation.y = 0
 target.orientation.z = 0
 target.orientation.w = 0
+
+Kp = 1
+Ki = 0.01
+Kd = 0.1
+
+thrustI = 0
+thrustD = 0
+thrustPrev = 0
+maxI = .5
 
 
 def callback(data):
@@ -18,17 +27,24 @@ def callback(data):
 	pid(data,target)
 
 def pid(meas, target):
-	# rospy.loginfo("I heard %s", meas.pose.pose.position)
+	global thrustI, thrustD, thrustPrev, maxI
+	rospy.loginfo("I heard %s", meas.pose.pose.position)
 
 	# Determine errors
 	thrustP = meas.pose.pose.position.z - target.position.z
-	thrustEI = thrustEI + thrustP
-	thrustED = thrustP - thrustPrev
+	thrustI = thrustI + thrustP
+	thrustD = thrustP - thrustPrev
+	thrustPrev = thrustP
 	rospy.loginfo("thrust error is %s", thrustP)
 
-	# Control effort
+	# Integrator anti windup in case it grows too much
+	if thrustI > maxI:
+		thrustI = maxI
 
-	pass
+	# Control effort
+	uThrust = Kp*thrustP + Ki*thrustI + Kd*thrustD
+	rospy.loginfo("thrust effort is %s\n", uThrust)
+
 	
 def listener():
 
