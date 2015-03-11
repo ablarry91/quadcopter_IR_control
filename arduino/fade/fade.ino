@@ -3,9 +3,11 @@
  
  This example shows how to fade an LED on pin 9
  using the analogWrite() function.
- 
- This example code is in the public domain.
+
  */
+
+#include <ros.h>
+#include <std_msgs/String.h>
 
 int led = 10;           // the pin that the LED is attached to
 int roll = 6;
@@ -16,6 +18,12 @@ int fadeAmount = 1;    // how many points to fade the LED by
 String inputString = "";         // a string to hold incoming data
 boolean stringComplete = false;  // whether the string is complete
 String inString = "";    // string to hold input
+
+void messageCb( const std_msgs::Empty& toggle_msg){
+  digitalWrite(13, HIGH-digitalRead(13));   // blink the led
+}
+
+ros::Subscriber<std_msgs::Empty> sub("toggle_led", &messageCb );
 
 // the setup routine runs once when you press reset:
 void setup()  { 
@@ -54,6 +62,8 @@ void setup()  {
   
 //  fullCycle();
 
+  nh.initNode();
+  nh.subscribe(sub);
 } 
 
 // the loop routine runs over and over again forever:
