@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+from std_msgs.msg import UInt8
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
 target = Pose()
@@ -20,6 +21,8 @@ thrustD = 0
 thrustPrev = 0
 maxI = .5
 
+PWM = 50
+
 
 def callback(data):
 	# you can find more info about a particular topic by typing in 'rosmsg show geometry_msgs/PoseWithCovarianceStamped'
@@ -27,8 +30,8 @@ def callback(data):
 	pid(data,target)
 
 def pid(meas, target):
-	global thrustI, thrustD, thrustPrev, maxI
-	rospy.loginfo("I heard %s", meas.pose.pose.position)
+	global thrustI, thrustD, thrustPrev, maxI, PWM
+	# rospy.loginfo("I heard %s", meas.pose.pose.position)
 
 	# Determine errors
 	thrustP = meas.pose.pose.position.z - target.position.z
@@ -43,8 +46,28 @@ def pid(meas, target):
 
 	# Control effort
 	uThrust = Kp*thrustP + Ki*thrustI + Kd*thrustD
-	rospy.loginfo("thrust effort is %s\n", uThrust)
+	rospy.loginfo("thrust effort is %s", uThrust)
 
+	# Convert for PWM
+	PWM = PWM + uThrust
+	PWMout = int(PWM)
+	rospy.loginfo("PWM is %s\n", PWMout)
+
+	# Publish the data
+	publish(PWMout)
+
+def publish(data):
+	pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
+	# rospy.init_node('talker', anonymous=True)
+	# rate = rospy.Rate(10) # 10hz
+	# while not rospy.is_shutdown():
+	pwm = UInt8()
+	pwm.data = data
+	# rospy.loginfo(hello_str)
+	pub.publish(pwm)
+	rospy.loginfo("published %s\n", data)
+	# rate.sleep()
+	pass
 	
 def listener():
 
