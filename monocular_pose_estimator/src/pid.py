@@ -12,19 +12,6 @@ target.orientation.y = 0
 target.orientation.z = 0
 target.orientation.w = 0
 
-# kpZ = 1
-# kiZ = 0.01
-# kdZ = 0.1
-# kpR = 1
-# kiR = 0.01
-# kdR = 0.1
-# kpP = 1
-# kiP = 0.01
-# kdP = 0.1
-# kpY = 1
-# kiY = 0.01
-# kdY = 0.1
-
 thrustI = 0
 thrustD = 0
 thrustPrev = 0
@@ -69,7 +56,6 @@ def pid(meas, target):
 
 def publish(data):
 	pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
-	# rospy.init_node('talker', anonymous=True)
 	pwm = UInt8()
 	pwm.data = data
 	pub.publish(pwm)
@@ -99,8 +85,12 @@ def kill(data):
 		wait = True
 	# rospy.loginfo("I heard %s", data)
 
-def reset(data):
-	pass
+def resetCommand(data):
+	global thrustI, thrustD, thrustPrev, PWM
+	thrustI = 0
+	thrustD = 0
+	thrustPrev = 0
+	PWM = 0
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
@@ -108,6 +98,7 @@ def listener():
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
 	rospy.Subscriber("killCommand",Bool, kill)
+	rospy.Subscriber("resetCommand", Bool, resetCommand)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()

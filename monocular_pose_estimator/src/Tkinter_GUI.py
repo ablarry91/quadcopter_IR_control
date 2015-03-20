@@ -11,6 +11,7 @@ resetStatus = False
 
 pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
 kill = rospy.Publisher('killCommand', Bool, queue_size=5)
+reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
 rospy.init_node('tkinterGUI', anonymous=True)
 
 def publishData(junk):
@@ -44,8 +45,10 @@ def abort():
 	a.data = abortStatus
 	kill.publish(a)
 
-def reset():
-	pass
+def resetTopic():
+	a = Bool()
+	a.data=False
+	reset.publish(a)
 
 root = Tk()
 frame = Frame(root)
@@ -79,7 +82,7 @@ var12 = DoubleVar()
 b0 = Button(frame0, text=abortText, command=abort)
 b0.pack(side=LEFT)
 
-b1 = Button(frame0, text="Reset gains", command=reset)
+b1 = Button(frame0, text="Reset gains", command=resetTopic)
 b1.pack(side=RIGHT)
 
 scale1 = Scale(frame1, label = 'kPThrust', variable = var1, from_ = 0.00, to = 5.00, length=sliderLength, resolution=0.01, command = publishData)
