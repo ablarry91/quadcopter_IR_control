@@ -37,7 +37,7 @@ def callback(data):
 	pid(data,target)
 
 def pid(meas, target):
-	global thrustI, thrustD, thrustPrev, maxI, PWM
+	global thrustI, thrustD, thrustPrev, maxI, PWM,inputs
 	# global controls, PWM
 	# rospy.loginfo("I heard %s", meas.pose.pose.position)
 
@@ -53,22 +53,28 @@ def pid(meas, target):
 	q1 = meas.pose.pose.orientation.y
 	q2 = meas.pose.pose.orientation.z
 	q3 = meas.pose.pose.orientation.w
-
-
 	roll = np.arctan2(2*(q0*q1+q2*q3),1-2*(q1**2+q2**2))
 	pitch = np.arcsin(2*(q0*q2-q3*q1))
 	yaw = np.arctan2(2*(q0*q3+q1*q2),1-2*(q2**2+q3**3))
-	print roll,pitch,yaw
+	# print roll,pitch,yaw
+	if roll < 0:  #this is a hack to deal with a singularity scenario
+		roll = np.pi()+(np.pi+roll)
 
-	rospy.loginfo("thrust error is %s", thrustP)
+	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
+	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
+
+	
+
+	# rospy.loginfo("thrust error is %s", thrustP)
 
 	# Integrator anti windup in case it grows too much
 	if thrustI > maxI:
 		thrustI = maxI
 
 	# Control effort
+
 	uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
-	rospy.loginfo("thrust effort is %s", uThrust)
+	# rospy.loginfo("thrust effort is %s", uThrust)
 
 	# Convert for PWM
 	PWM = PWM + uThrust
