@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import time
+import numpy as np
 from std_msgs.msg import UInt8, UInt8MultiArray, Float32MultiArray, Bool
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
@@ -17,6 +18,9 @@ thrustI = 0
 thrustD = 0
 thrustPrev = 0
 maxI = .5
+
+k = np.zeros([4,3])  #4x3 matrix of PID gains
+inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 
 PWM = 0
 PWMWait = PWM
@@ -71,7 +75,7 @@ def publish(data):
 	pub.publish(dataOut)
 
 def GUI(data):
-    global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
+    global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY, k
     kpZ = data.data[0]
     kiZ = data.data[1]
     kdZ = data.data[2]
@@ -84,7 +88,10 @@ def GUI(data):
     kpY = data.data[9]
     kiY = data.data[10]
     kdY = data.data[11]
-    # print data
+
+    for i in range(len(data.data)):
+    	for j in range(len(data.data)):
+    		k[i%4-4,j%3-3] = data.data[i]
     
 def kill(data):
 	global wait
