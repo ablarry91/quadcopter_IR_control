@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import UInt8
+from std_msgs.msg import UInt8, Int16MultiArray
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
 target = Pose()
