@@ -24,6 +24,8 @@ wait = True
 
 syncData = True
 
+pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
+
 
 def callback(data):
 	pid(data,target)
@@ -37,7 +39,7 @@ def pid(meas, target):
 	thrustI = thrustI + thrustP
 	thrustD = thrustP - thrustPrev
 	thrustPrev = thrustP
-	# rospy.loginfo("thrust error is %s", thrustP)
+	rospy.loginfo("thrust error is %s", thrustP)
 
 	# Integrator anti windup in case it grows too much
 	if thrustI > maxI:
@@ -45,7 +47,7 @@ def pid(meas, target):
 
 	# Control effort
 	uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
-	# rospy.loginfo("thrust effort is %s", uThrust)
+	rospy.loginfo("thrust effort is %s", uThrust)
 
 	# Convert for PWM
 	PWM = PWM + uThrust
@@ -58,11 +60,10 @@ def pid(meas, target):
 		publish(PWMout)
 
 def publish(data):
-	pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
 	pwm = UInt8()
 	pwm.data = data
 	pub.publish(pwm)
-	# rospy.loginfo("PWM published: %s\n    ", data)
+	rospy.loginfo("PWM published: %s\n    ", data)
 
 def GUI(data):
     global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
@@ -111,6 +112,8 @@ def sync(data):
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
+
+
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
