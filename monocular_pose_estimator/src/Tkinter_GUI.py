@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Bool
 from Tkinter import *
 
 sliderLength = 160
+abortStatus = True
+abortText = "Tinfoil hat mode"
+resetStatus = False
 
 pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
+kill = rospy.Publisher('killCommand', Bool, queue_size=5)
 rospy.init_node('tkinterGUI', anonymous=True)
 
 def publishData(junk):
@@ -27,10 +31,15 @@ def publishData(junk):
 	# print a.data
 
 def abort():
-	print 'bloop!'
-	# a = Int16MultiArray
-	pass
-
+	global abortStatus
+	if abortStatus:
+		# rospy.loginfo("published")
+		abortStatus = False
+		b0["text"] = "I REGRET THIS DECISION"
+	else:
+		# rospy.loginfo("published")
+		abortStatus = True
+		b0["text"] = "Try again fool."
 def reset():
 	pass
 
@@ -63,10 +72,10 @@ var10 = DoubleVar()
 var11 = DoubleVar()
 var12 = DoubleVar()
 
-b0 = Button(frame0, text="Abort!", command=abort)
+b0 = Button(frame0, text=abortText, command=abort)
 b0.pack(side=LEFT)
 
-b1 = Button(frame0, text="Reset", command=abort)
+b1 = Button(frame0, text="Reset gains", command=reset)
 b1.pack(side=RIGHT)
 
 scale1 = Scale(frame1, label = 'kPThrust', variable = var1, from_ = 0.00, to = 5.00, length=sliderLength, resolution=0.01, command = publishData)
