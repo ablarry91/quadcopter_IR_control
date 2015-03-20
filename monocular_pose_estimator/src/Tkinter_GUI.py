@@ -40,6 +40,10 @@ def abort():
 		# rospy.loginfo("published")
 		abortStatus = True
 		b0["text"] = "Try again fool."
+	a = Bool()
+	a.data = abortStatus
+	kill.publish(a)
+
 def reset():
 	pass
 

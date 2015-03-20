@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import UInt8, Float32MultiArray
+from std_msgs.msg import UInt8, Float32MultiArray, Bool
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
 target = Pose()
@@ -87,6 +87,10 @@ def GUI(data):
     kiY = data.data[10]
     kdY = data.data[11]
     print data
+    
+def kill(data):
+	rospy.loginfo("I heard %s", data)
+	# print data
 
 	
 def listener():
@@ -100,6 +104,7 @@ def listener():
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
+	rospy.Subscriber("killCommand",Bool, kill)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
