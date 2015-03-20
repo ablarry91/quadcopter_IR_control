@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import UInt8, Int16MultiArray
+from std_msgs.msg import UInt8, Float32MultiArray
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
 target = Pose()
@@ -47,7 +47,7 @@ def pid(meas, target):
 	thrustI = thrustI + thrustP
 	thrustD = thrustP - thrustPrev
 	thrustPrev = thrustP
-	rospy.loginfo("thrust error is %s", thrustP)
+	# rospy.loginfo("thrust error is %s", thrustP)
 
 	# Integrator anti windup in case it grows too much
 	if thrustI > maxI:
@@ -55,12 +55,11 @@ def pid(meas, target):
 
 	# Control effort
 	uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
-	rospy.loginfo("thrust effort is %s", uThrust)
+	# rospy.loginfo("thrust effort is %s", uThrust)
 
 	# Convert for PWM
 	PWM = PWM + uThrust
 	PWMout = int(PWM)
-	rospy.loginfo("PWM is %s\n", PWMout)
 
 	# Publish the data
 	publish(PWMout)
@@ -71,8 +70,7 @@ def publish(data):
 	pwm = UInt8()
 	pwm.data = data
 	pub.publish(pwm)
-	rospy.loginfo("published %s\n", data)
-	pass
+	# rospy.loginfo("published %s\n", data)
 
 def GUI(data):
     global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
@@ -101,7 +99,7 @@ def listener():
 	rospy.init_node('pid', anonymous=True)
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
-	rospy.Subscriber("sliderData", Int16MultiArray, GUI)
+	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
