@@ -59,14 +59,10 @@ def pid(meas, target):
 def publish(data):
 	pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
 	# rospy.init_node('talker', anonymous=True)
-	# rate = rospy.Rate(10) # 10hz
-	# while not rospy.is_shutdown():
 	pwm = UInt8()
 	pwm.data = data
-	# rospy.loginfo(hello_str)
 	pub.publish(pwm)
 	rospy.loginfo("published %s\n", data)
-	# rate.sleep()
 	pass
 	
 def listener():
