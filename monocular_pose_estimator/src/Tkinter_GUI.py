@@ -26,15 +26,25 @@ def publishData(junk):
 	pub.publish(a)
 	# print a.data
 
+def abort():
+	print 'bloop!'
+	# a = Int16MultiArray
+	pass
+
+def reset():
+	pass
+
 root = Tk()
 frame = Frame(root)
 frame.pack()
 
+frame0 = Frame(frame)
 frame1 = Frame(frame)
 frame2 = Frame(frame)
 frame3 = Frame(frame)
 frame4 = Frame(frame)
 
+frame0.pack(side = TOP)
 frame1.pack(side = TOP)
 frame2.pack(side = TOP)
 frame3.pack(side = TOP)
@@ -52,6 +62,12 @@ var9 = DoubleVar()
 var10 = DoubleVar()
 var11 = DoubleVar()
 var12 = DoubleVar()
+
+b0 = Button(frame0, text="Abort!", command=abort)
+b0.pack(side=LEFT)
+
+b1 = Button(frame0, text="Reset", command=abort)
+b1.pack(side=RIGHT)
 
 scale1 = Scale(frame1, label = 'kPThrust', variable = var1, from_ = 0.00, to = 5.00, length=sliderLength, resolution=0.01, command = publishData)
 scale1.set(0)
