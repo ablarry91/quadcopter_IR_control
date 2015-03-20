@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+import time
 from std_msgs.msg import UInt8, Float32MultiArray, Bool
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
@@ -20,6 +21,8 @@ maxI = .5
 PWM = 0
 PWMWait = PWM
 wait = True
+
+syncData = True
 
 
 def callback(data):
@@ -91,6 +94,20 @@ def resetCommand(data):
 	thrustD = 0
 	thrustPrev = 0
 	PWM = 0
+
+def sync(data):
+	global syncData
+	# rospy.loginfo("I heard %s", data)
+
+	syncData = False
+	for i in range(255):
+		publish(i)
+		time.sleep(0.01)
+	for i in range(255):
+		publish(255-i)
+		time.sleep(0.01)
+	syncData = True
+
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
@@ -99,6 +116,7 @@ def listener():
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
 	rospy.Subscriber("killCommand",Bool, kill)
 	rospy.Subscriber("resetCommand", Bool, resetCommand)
+	rospy.Subscriber("syncCommand", Bool, sync)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
