@@ -12,9 +12,18 @@ target.orientation.y = 0
 target.orientation.z = 0
 target.orientation.w = 0
 
-Kp = 1
-Ki = 0.01
-Kd = 0.1
+kpZ = 1
+kiZ = 0.01
+kdZ = 0.1
+kpR = 1
+kiR = 0.01
+kdR = 0.1
+kpP = 1
+kiP = 0.01
+kdP = 0.1
+kpY = 1
+kiY = 0.01
+kdY = 0.1
 
 thrustI = 0
 thrustD = 0
@@ -45,7 +54,7 @@ def pid(meas, target):
 		thrustI = maxI
 
 	# Control effort
-	uThrust = Kp*thrustP + Ki*thrustI + Kd*thrustD
+	uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
 	rospy.loginfo("thrust effort is %s", uThrust)
 
 	# Convert for PWM
@@ -64,6 +73,23 @@ def publish(data):
 	pub.publish(pwm)
 	rospy.loginfo("published %s\n", data)
 	pass
+
+def GUI(data):
+    global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
+    kpZ = data.data[0]
+    kiZ = data.data[1]
+    kdZ = data.data[2]
+    kpR = data.data[3]
+    kiR = data.data[4]
+    kdR = data.data[5]
+    kpP = data.data[6]
+    kiP = data.data[7]
+    kdP = data.data[8]
+    kpY = data.data[9]
+    kiY = data.data[10]
+    kdY = data.data[11]
+    print data
+
 	
 def listener():
 
@@ -75,6 +101,7 @@ def listener():
 	rospy.init_node('pid', anonymous=True)
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
+	rospy.Subscriber("sliderData", Int16MultiArray, GUI)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
