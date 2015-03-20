@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import time
-from std_msgs.msg import UInt8, Float32MultiArray, Bool
+from std_msgs.msg import UInt8, UInt8MultiArray, Float32MultiArray, Bool
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
 target = Pose()
@@ -24,7 +24,7 @@ wait = True
 
 syncData = True
 
-pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
+pub = rospy.Publisher('pwm_control', UInt8MultiArray, queue_size=10)
 
 
 def callback(data):
@@ -60,10 +60,15 @@ def pid(meas, target):
 		publish(PWMout)
 
 def publish(data):
-	pwm = UInt8()
-	pwm.data = data
-	pub.publish(pwm)
+	# pwm = UInt8()
+	# pwm.data = data
+	# pub.publish(pwm)
+	# rospy.loginfo("PWM published: %s\n    ", data)
+
+	dataOut = UInt8MultiArray()
+	dataOut.data = [data,data,data,data]
 	rospy.loginfo("PWM published: %s\n    ", data)
+	pub.publish(dataOut)
 
 def GUI(data):
     global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
