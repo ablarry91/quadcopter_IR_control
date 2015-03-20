@@ -12,30 +12,30 @@ target.orientation.y = 0
 target.orientation.z = 0
 target.orientation.w = 0
 
-kpZ = 1
-kiZ = 0.01
-kdZ = 0.1
-kpR = 1
-kiR = 0.01
-kdR = 0.1
-kpP = 1
-kiP = 0.01
-kdP = 0.1
-kpY = 1
-kiY = 0.01
-kdY = 0.1
+# kpZ = 1
+# kiZ = 0.01
+# kdZ = 0.1
+# kpR = 1
+# kiR = 0.01
+# kdR = 0.1
+# kpP = 1
+# kiP = 0.01
+# kdP = 0.1
+# kpY = 1
+# kiY = 0.01
+# kdY = 0.1
 
 thrustI = 0
 thrustD = 0
 thrustPrev = 0
 maxI = .5
 
-PWM = 50
+PWM = 0
+PWMWait = PWM
+wait = True
 
 
 def callback(data):
-	# you can find more info about a particular topic by typing in 'rosmsg show geometry_msgs/PoseWithCovarianceStamped'
-	# rospy.loginfo("I heard %s", data.pose.pose.position)
 	pid(data,target)
 
 def pid(meas, target):
@@ -62,7 +62,10 @@ def pid(meas, target):
 	PWMout = int(PWM)
 
 	# Publish the data
-	publish(PWMout)
+	if wait == True:
+		publish(0)
+	elif wait == False:
+		publish(PWMout)
 
 def publish(data):
 	pub = rospy.Publisher('pwm_control', UInt8, queue_size=10)
@@ -70,7 +73,7 @@ def publish(data):
 	pwm = UInt8()
 	pwm.data = data
 	pub.publish(pwm)
-	# rospy.loginfo("published %s\n", data)
+	# rospy.loginfo("PWM published: %s\n    ", data)
 
 def GUI(data):
     global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY
@@ -86,20 +89,20 @@ def GUI(data):
     kpY = data.data[9]
     kiY = data.data[10]
     kdY = data.data[11]
-    print data
+    # print data
     
 def kill(data):
-	rospy.loginfo("I heard %s", data)
-	# print data
+	global wait
+	if data.data == False:
+		wait = False
+	else:
+		wait = True
+	# rospy.loginfo("I heard %s", data)
 
+def reset(data):
+	pass
 	
 def listener():
-
-	# In ROS, nodes are uniquely named. If two nodes with the same
-	# node are launched, the previous one is kicked off. The
-	# anonymous=True flag means that rospy will choose a unique
-	# name for our 'listener' node so that multiple listeners can
-	# run simultaneously.
 	rospy.init_node('pid', anonymous=True)
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
