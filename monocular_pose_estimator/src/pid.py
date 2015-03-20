@@ -21,6 +21,8 @@ maxI = .5
 
 k = np.zeros([4,3])  #4x3 matrix of PID gains
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
+maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
+PWM = np.zeros([4])
 
 PWM = 0
 PWMWait = PWM
@@ -36,6 +38,7 @@ def callback(data):
 
 def pid(meas, target):
 	global thrustI, thrustD, thrustPrev, maxI, PWM
+	# global controls, PWM
 	# rospy.loginfo("I heard %s", meas.pose.pose.position)
 
 	# Determine errors
@@ -43,6 +46,20 @@ def pid(meas, target):
 	thrustI = thrustI + thrustP
 	thrustD = thrustP - thrustPrev
 	thrustPrev = thrustP
+
+
+	# Convert quaternion to euler
+	q0 = meas.pose.pose.orientation.x
+	q1 = meas.pose.pose.orientation.y
+	q2 = meas.pose.pose.orientation.z
+	q3 = meas.pose.pose.orientation.w
+
+
+	roll = np.arctan2(2*(q0*q1+q2*q3),1-2*(q1**2+q2**2))
+	pitch = np.arcsin(2*(q0*q2-q3*q1))
+	yaw = np.arctan2(2*(q0*q3+q1*q2),1-2*(q2**2+q3**3))
+	print roll,pitch,yaw
+
 	rospy.loginfo("thrust error is %s", thrustP)
 
 	# Integrator anti windup in case it grows too much
@@ -124,8 +141,6 @@ def sync(data):
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
-
-
 
 	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
