@@ -19,12 +19,12 @@ thrustD = 0
 thrustPrev = 0
 maxI = .5
 
-k = np.zeros([4,3])  #4x3 matrix of PID gains
+k = np.zeros([4,3])  #4x3 matrix of PID gains, for thrust, roll, pitch, yaw
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
 PWM = np.zeros([4])
 
-PWM = 0
+# PWM = 0
 PWMWait = PWM
 wait = True
 
@@ -63,37 +63,67 @@ def pid(meas, target):
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
 
+	# Update controls.  This is really stupid, I know.
+	inputs[0,0] = inputs[0,0] + meas.pose.pose.position.z - target.position.z
+	inputs[0,1] = meas.pose.pose.position.z - target.position.z - inputs[0,2]
+	inputs[0,2] = meas.pose.pose.position.z - target.position.z
+
+	inputs[1,0] = inputs[1,0] + rollPitchE[0,0] - target.position.x
+	inputs[1,1] = rollPitchE[0,0] - target.position.x - inputs[1,2]
+	inputs[1,2] = rollPitchE[0,0] - target.position.x
+
+	inputs[2,0] = inputs[2,0] + rollPitchE[0,1] - target.position.y
+	inputs[2,1] = rollPitchE[0,1] - target.position.y - inputs[2,2]
+	inputs[2,2] = rollPitchE[0,1] - target.position.y
+
+	inputs[3,0] = inputs[3,0] + yaw
+	inputs[3,1] = yaw - inputs[3,2]
+	inputs[3,2] = yaw
+
+	# PID equation
+	u0 = np.dot(k[0,:],np.transpose(inputs[0,:]))
+	u1 = np.dot(k[1,:],np.transpose(inputs[1,:]))
+	u2 = np.dot(k[2,:],np.transpose(inputs[2,:]))
+	u3 = np.dot(k[3,:],np.transpose(inputs[3,:]))
+	u = np.array([u0,u1,u2,u3])
+
+	# # Integrator anti windup in case it grows too much
+	# if thrustI > maxI:
+	# 	thrustI = maxI
 	
-
-	# rospy.loginfo("thrust error is %s", thrustP)
-
-	# Integrator anti windup in case it grows too much
-	if thrustI > maxI:
-		thrustI = maxI
-
-	# Control effort
-
-	uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
-	# rospy.loginfo("thrust effort is %s", uThrust)
-
 	# Convert for PWM
-	PWM = PWM + uThrust
-	PWMout = int(PWM)
+	for i in range(len(PWM)):
+		PWM[i] = PWM[i] + int(u[i])
+	# PWM = int(PWM + u)
+
+	#Publish
+	if wait == True:
+		publish(np.zeros(4))
+	elif wait == False:
+		publish(PWM)
+
+
+
+	# # Control effort
+
+	# uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
+	# # rospy.loginfo("thrust effort is %s", uThrust)
+
+	# # Convert for PWM
+	# PWM = PWM + uThrust
+	# PWMout = int(PWM)
 
 	# Publish the data
-	if wait == True:
-		publish(0)
-	elif wait == False:
-		publish(PWMout)
+
 
 def publish(data):
 	# pwm = UInt8()
 	# pwm.data = data
 	# pub.publish(pwm)
 	# rospy.loginfo("PWM published: %s\n    ", data)
-
+	print "DATA IS EQUAL TO", data
 	dataOut = UInt8MultiArray()
-	dataOut.data = [data,data,data,data]
+	dataOut.data = [data[0],data[1],data[2],data[3]]
 	rospy.loginfo("PWM published: %s\n    ", data)
 	pub.publish(dataOut)
 
