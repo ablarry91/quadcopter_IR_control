@@ -5,6 +5,7 @@ import numpy as np
 from std_msgs.msg import UInt8, UInt8MultiArray, Float32MultiArray, Bool
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 
+# create the target at which the quadcopter will attempt to hold
 target = Pose()
 target.position.x = 0
 target.position.y = 0
@@ -14,39 +15,25 @@ target.orientation.y = 0
 target.orientation.z = 0
 target.orientation.w = 0
 
-thrustI = 0
-thrustD = 0
-thrustPrev = 0
-maxI = .5
-
+# variables used throughout the code
 k = np.zeros([4,3])  #4x3 matrix of PID gains, for thrust, roll, pitch, yaw
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
-PWM = np.zeros([4])
+PWM = np.zeros([4]) #the integer PWM values sent over to an arduino
 
-# PWM = 0
-PWMWait = PWM
-wait = True
+wait = True #toggled with a button, stops the PID controller from publishing PWM signals if necessary
+syncData = True #used for connecting the RF controller to the quad.  You should only have to do this once every session.
 
-syncData = True
-
+# create the publisher for the arduino
 pub = rospy.Publisher('pwm_control', UInt8MultiArray, queue_size=10)
 
 
-def callback(data):
+def pidPrep(data):
 	pid(data,target)
 
 def pid(meas, target):
-	global thrustI, thrustD, thrustPrev, maxI, PWM,inputs
-	# global controls, PWM
+	global maxI, PWM, inputs
 	# rospy.loginfo("I heard %s", meas.pose.pose.position)
-
-	# Determine errors
-	thrustP = meas.pose.pose.position.z - target.position.z
-	thrustI = thrustI + thrustP
-	thrustD = thrustP - thrustPrev
-	thrustPrev = thrustP
-
 
 	# Convert quaternion to euler
 	q0 = meas.pose.pose.orientation.x
@@ -57,9 +44,10 @@ def pid(meas, target):
 	pitch = np.arcsin(2*(q0*q2-q3*q1))
 	yaw = np.arctan2(2*(q0*q3+q1*q2),1-2*(q2**2+q3**3))
 	# print roll,pitch,yaw
-	if roll < 0:  #this is a hack to deal with a singularity scenario
+	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
 		roll = np.pi()+(np.pi+roll)
 
+	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
 
@@ -94,66 +82,35 @@ def pid(meas, target):
 	# Convert for PWM
 	for i in range(len(PWM)):
 		PWM[i] = PWM[i] + int(u[i])
-	# PWM = int(PWM + u)
 
-	#Publish
+	#Publish to the arduino
 	if wait == True:
 		publish(np.zeros(4))
 	elif wait == False:
 		publish(PWM)
 
-
-
-	# # Control effort
-
-	# uThrust = kpZ*thrustP + kiZ*thrustI + kdZ*thrustD
-	# # rospy.loginfo("thrust effort is %s", uThrust)
-
-	# # Convert for PWM
-	# PWM = PWM + uThrust
-	# PWMout = int(PWM)
-
-	# Publish the data
-
-
+# publishes to the arduino
 def publish(data):
-	# pwm = UInt8()
-	# pwm.data = data
-	# pub.publish(pwm)
-	# rospy.loginfo("PWM published: %s\n    ", data)
-	print "DATA IS EQUAL TO", data
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
 	rospy.loginfo("PWM published: %s\n    ", data)
 	pub.publish(dataOut)
 
+# the GUI runs from a kTinker node and is mostly responsible for adjusting gains, and starting/stopping the controller
 def GUI(data):
-    global kpZ, kiZ, kdZ, kpR, kiR, kdR, kpP, kiP, kdP, kpY, kiY, kdY, k
-    kpZ = data.data[0]
-    kiZ = data.data[1]
-    kdZ = data.data[2]
-    kpR = data.data[3]
-    kiR = data.data[4]
-    kdR = data.data[5]
-    kpP = data.data[6]
-    kiP = data.data[7]
-    kdP = data.data[8]
-    kpY = data.data[9]
-    kiY = data.data[10]
-    kdY = data.data[11]
-
     for i in range(len(data.data)):
     	for j in range(len(data.data)):
     		k[i%4-4,j%3-3] = data.data[i]
-    
+
+# turns PWM to 0 if called    
 def kill(data):
 	global wait
 	if data.data == False:
 		wait = False
 	else:
 		wait = True
-	# rospy.loginfo("I heard %s", data)
 
+# resets the gains that have accumulated
 def resetCommand(data):
 	global thrustI, thrustD, thrustPrev, PWM
 	thrustI = 0
@@ -161,24 +118,22 @@ def resetCommand(data):
 	thrustPrev = 0
 	PWM = 0
 
+# necessary to be called once for each session, to sync the RF controller to the quadcopter
 def sync(data):
 	global syncData
-	# rospy.loginfo("I heard %s", data)
-
-	syncData = False
+	syncData = False # I was hoping this could stop a subscriber from working, but no cigar
 	for i in range(255):
 		publish(i)
 		time.sleep(0.01)
 	for i in range(255):
 		publish(255-i)
 		time.sleep(0.01)
-	syncData = True
+	syncData = True  
 
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
-
-	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, callback)
+	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, pidPrep)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
 	rospy.Subscriber("killCommand",Bool, kill)
 	rospy.Subscriber("resetCommand", Bool, resetCommand)
@@ -189,3 +144,11 @@ def listener():
 
 if __name__ == '__main__':
 	listener()
+
+
+
+
+
+
+
+	
