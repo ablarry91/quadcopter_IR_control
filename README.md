@@ -299,3 +299,4 @@ The placement of the LEDs on the target object can be arbitrary, but must be non
 
 The camera used was a [MatrixVision](http://www.matrix-vision.com/) mvBlueFOX-MLC200w monochrome camera fitted with an infrared-pass filter. Its resolution is 752x480 pixels.
 # quadcopter_IR_control
+# quadcopter_IR_control
