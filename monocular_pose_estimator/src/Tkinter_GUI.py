@@ -4,17 +4,19 @@ import rospy
 from std_msgs.msg import Float32MultiArray, Bool
 from Tkinter import *
 
-sliderLength = 160
-abortStatus = True
-abortText = "Tinfoil hat mode"
-resetStatus = False
+sliderLength = 160 #the physical length of a slider
+abortStatus = True #emergency stop for the quadcopter
+abortText = "Tinfoil hat mode"  #is there a word for robot phobia?
+resetStatus = False #resets the gains
 
+#create the publishers
 pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
 kill = rospy.Publisher('killCommand', Bool, queue_size=5)
 reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
 sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
 rospy.init_node('tkinterGUI', anonymous=True)
 
+#any time the slider changes, this function is called
 def publishData(junk):
 	a = Float32MultiArray()
 	a.data.append(float(var1.get()))
@@ -30,8 +32,8 @@ def publishData(junk):
 	a.data.append(float(var11.get()))
 	a.data.append(float(var12.get()))
 	pub.publish(a)
-	# print a.data
 
+#force stop the quadcopter
 def abortCommand():
 	global abortStatus
 	if abortStatus:
@@ -46,32 +48,38 @@ def abortCommand():
 	a.data = abortStatus
 	kill.publish(a)
 
+#reset the gains
 def resetCommand():
 	a = Bool()
 	a.data=False
 	reset.publish(a)
 
+#connect the RF controller to the quadcopter
 def syncCommand():
 	a = Bool()
 	a.data=True
 	sync.publish(a)
 
+#create the GUI window
 root = Tk()
 frame = Frame(root)
 frame.pack()
 
+#build subframes into the main GUI frame
 frame0 = Frame(frame)
 frame1 = Frame(frame)
 frame2 = Frame(frame)
 frame3 = Frame(frame)
 frame4 = Frame(frame)
 
+#indicate where you want the frames to be oriented
 frame0.pack(side = TOP)
 frame1.pack(side = TOP)
 frame2.pack(side = TOP)
 frame3.pack(side = TOP)
 frame4.pack(side = TOP)
 
+#reserve a float for each gain value
 var1 = DoubleVar()
 var2 = DoubleVar()
 var3 = DoubleVar()
@@ -85,15 +93,15 @@ var10 = DoubleVar()
 var11 = DoubleVar()
 var12 = DoubleVar()
 
+#create buttons
 b0 = Button(frame0, text=abortText, command=abortCommand)
 b0.pack(side=RIGHT)
-
 b1 = Button(frame0, text="Reset gains", command=resetCommand)
 b1.pack(side=RIGHT)
-
 b2 = Button(frame0, text="Sync",command=syncCommand)
 b2.pack(side=RIGHT)
 
+#insert the scales into the appropriate frames and associate to your desired variable
 scale1 = Scale(frame1, label = 'kPThrust', variable = var1, from_ = 0.00, to = 5.00, length=sliderLength, resolution=0.01, command = publishData)
 scale1.set(0)
 scale1.pack(side=LEFT)
@@ -131,4 +139,5 @@ scale12 = Scale(frame4, label = 'kdYaw', variable = var12, from_ = 0, to = 5, le
 scale12.set(0)
 scale12.pack(side=LEFT)
 
+#run the loop indefinitely
 root.mainloop()
