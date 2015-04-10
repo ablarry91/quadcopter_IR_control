@@ -91,7 +91,7 @@ def pid(meas, target):
 
 # publishes to the arduino
 def publish(data):
-	print data
+	# print data
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
 	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
@@ -124,10 +124,10 @@ def sync(data):
 	global syncData
 	syncData = False # I was hoping this could stop a subscriber from working, but no cigar
 	for i in range(255):
-		publish(i)
+		publish([i,0,0,0])
 		time.sleep(0.01)
 	for i in range(255):
-		publish(255-i)
+		publish([255-i,0,0,0])
 		time.sleep(0.01)
 	syncData = True  
 
