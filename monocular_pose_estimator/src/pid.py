@@ -43,9 +43,11 @@ def pid(meas, target):
 	pitch = np.arcsin(2*(q0*q2-q3*q1))
 	yaw = np.arctan2(2*(q0*q3+q1*q2),1-2*(q2**2+q3**3))
 	# print roll,pitch,yaw
-	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
-		roll = np.pi()+(np.pi+roll)
 
+	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
+		roll = np.pi+(np.pi+roll)
+		print "INVERTING"
+	print roll
 	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
