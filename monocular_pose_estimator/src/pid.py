@@ -16,16 +16,15 @@ target.orientation.z = 0
 target.orientation.w = 0
 
 # variables used throughout the code
-k = np.zeros([4,3])  #4x3 matrix of PID gains, for thrust, roll, pitch, yaw
+k = np.zeros([4,3])  #4x3 atrix of PID gains, for thrust, roll, pitch, yaw
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
 PWM = np.zeros([4]) #the integer PWM values sent over to an arduino
-
 wait = True #toggled with a button, stops the PID controller from publishing PWM signals if necessary
 syncData = True #used for connecting the RF controller to the quad.  You should only have to do this once every session.
 
 # create the publisher for the arduino
-pub = rospy.Publisher('pwm_control', UInt8MultiArray, queue_size=10)
+pub = rospy.Publisher('pwm_control', UInt8MultiArray, queue_size=50)
 
 
 def pidPrep(data):
@@ -67,14 +66,15 @@ def pid(meas, target):
 	inputs[3,0] = inputs[3,0] + yaw
 	inputs[3,1] = yaw - inputs[3,2]
 	inputs[3,2] = yaw
+	# print inputs
 
 	# PID equation
+	# print k
 	u0 = np.dot(k[0,:],np.transpose(inputs[0,:]))
 	u1 = np.dot(k[1,:],np.transpose(inputs[1,:]))
 	u2 = np.dot(k[2,:],np.transpose(inputs[2,:]))
 	u3 = np.dot(k[3,:],np.transpose(inputs[3,:]))
 	u = np.array([u0,u1,u2,u3])
-
 	# # Integrator anti windup in case it grows too much
 	# if thrustI > maxI:
 	# 	thrustI = maxI
@@ -91,17 +91,18 @@ def pid(meas, target):
 
 # publishes to the arduino
 def publish(data):
+	print data
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
-	rospy.loginfo("PWM published: %s\n    ", data)
+	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
 	pub.publish(dataOut)
 
 # the GUI runs from a kTinker node and is mostly responsible for adjusting gains, and starting/stopping the controller
 def GUI(data):
-    for i in range(len(data.data)):
-    	for j in range(len(data.data)):
-    		k[i%4-4,j%3-3] = data.data[i]
-
+	for i in range(len(data.data)):
+		# for j in range(len(data.data)):
+		# k[i%4-4,j%3-3] = data.data[i]
+		k[np.floor(i/3),i%3-3] = data.data[i]
 # turns PWM to 0 if called    
 def kill(data):
 	global wait
@@ -151,4 +152,3 @@ if __name__ == '__main__':
 
 
 
-	
