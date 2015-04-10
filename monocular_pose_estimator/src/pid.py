@@ -117,7 +117,7 @@ def resetCommand(data):
 	thrustI = 0
 	thrustD = 0
 	thrustPrev = 0
-	PWM = 0
+	PWM = np.zeros([4])
 
 # necessary to be called once for each session, to sync the RF controller to the quadcopter
 def sync(data):
