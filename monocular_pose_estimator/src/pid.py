@@ -19,9 +19,11 @@ target.orientation.w = 0
 k = np.zeros([4,3])  #4x3 atrix of PID gains, for thrust, roll, pitch, yaw
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
-PWM = np.zeros([4]) #the integer PWM values sent over to an arduino
+PWM = np.array([0,255,255,255]) #the integer PWM values sent over to an arduino
 wait = True #toggled with a button, stops the PID controller from publishing PWM signals if necessary
 syncData = True #used for connecting the RF controller to the quad.  You should only have to do this once every session.
+upperLimit = 255  #upper limit for PWM command that can be published
+lowerLimit = 0   #lower limit for PWM command that can be published
 
 # create the publisher for the arduino
 pub = rospy.Publisher('pwm_control', UInt8MultiArray, queue_size=50)
@@ -74,6 +76,7 @@ def pid(meas, target):
 	# print k
 	u0 = np.dot(k[0,:],np.transpose(inputs[0,:]))
 	u1 = np.dot(k[1,:],np.transpose(inputs[1,:]))
+	print u1
 	u2 = np.dot(k[2,:],np.transpose(inputs[2,:]))
 	u3 = np.dot(k[3,:],np.transpose(inputs[3,:]))
 	u = np.array([u0,u1,u2,u3])
@@ -83,7 +86,13 @@ def pid(meas, target):
 	
 	# Convert for PWM
 	for i in range(len(PWM)):
-		PWM[i] = PWM[i] + int(u[i])
+		val = PWM[i] + int(u[i])
+		if val > upperLimit:
+			PWM[i] = upperLimit
+		elif val < lowerLimit:
+			PWM[i] = lowerLimit
+		else:
+			PWM[i] = PWM[i] + int(u[i])
 
 	#Publish to the arduino
 	if wait == True:
