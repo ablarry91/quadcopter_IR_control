@@ -28,7 +28,18 @@
 	<!-- rosbag play -->
 	<!-- <node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/> -->
 	
-	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/>
+<!-- 	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/> -->
+
+	<node pkg="usb_cam" type="usb_cam_node" name="usb_cam" output="screen" >
+		<param name="video_device" type="string" value="/dev/video1"/>
+		<param name="image_width" type="int" value="640" />
+		<param name="image_height" type="int" value="480" />
+		<param name="pixel_format" type="string" value="yuyv"/>
+		<param name="name" type="string" value="tracker_camera"/>
+<!-- 		<param name="framerate" type="integer" value="30" /> -->
+		<param name="camera_info_url" type="string"
+      value="file:///home/ablarry91/.ros/camera_info/head_camera.yaml" />
+	</node>
 
 	<node pkg="monocular_pose_estimator" type="pid.py" name="pid" output="screen" >
 	</node>
@@ -40,4 +51,9 @@
 		<param name="port" value="/dev/ttyACM0"/>
 		<param name="baud" value="57600"/>
 	</node>
+
+  <node ns="usb_cam" pkg="image_proc" type="image_proc" name="image_proc"/>
+
+<node name="raw_image" pkg="image_view" type="image_view" args="image:=/usb_cam/image_rect" />
+
 </launch>
