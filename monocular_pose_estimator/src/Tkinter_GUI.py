@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import Float32MultiArray, Bool
+from std_msgs.msg import Float32MultiArray, Bool,UInt8MultiArray
 from Tkinter import *
 
 sliderLength = 160 #the physical length of a slider
 abortStatus = True #emergency stop for the quadcopter
-abortText = "Tinfoil hat mode"  #is there a word for robot phobia?
+abortText = "Enable motors"  #is there a word for robot phobia?
 resetStatus = False #resets the gains
 
 #create the publishers
@@ -14,6 +14,7 @@ pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
 kill = rospy.Publisher('killCommand', Bool, queue_size=5)
 reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
 sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
+pwm = rospy.Publisher('pwmInput', UInt8MultiArray, queue_size=5)
 rospy.init_node('tkinterGUI', anonymous=True)
 
 #any time the slider changes, this function is called
@@ -43,7 +44,7 @@ def abortCommand():
 	else:
 		# rospy.loginfo("published")
 		abortStatus = True
-		b0["text"] = "Try again fool."
+		b0["text"] = "Enable motors."
 	a = Bool()
 	a.data = abortStatus
 	kill.publish(a)
@@ -60,6 +61,16 @@ def syncCommand():
 	a.data=True
 	sync.publish(a)
 
+def pwmControl():
+	data1 = int(e1.get())
+	data2 = int(e2.get())
+	data3 = int(e3.get())
+	data4 = int(e4.get())
+	dataOut = UInt8MultiArray()
+	dataOut.data = [data1,data2,data3,data4]
+	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	pwm.publish(dataOut)
+
 #create the GUI window
 root = Tk()
 frame = Frame(root)
@@ -67,6 +78,7 @@ frame.pack()
 
 #build subframes into the main GUI frame
 frame0 = Frame(frame)
+frame01 = Frame(frame,borderwidth=2,relief=RAISED)
 frame1 = Frame(frame)
 frame2 = Frame(frame)
 frame3 = Frame(frame)
@@ -74,6 +86,7 @@ frame4 = Frame(frame)
 
 #indicate where you want the frames to be oriented
 frame0.pack(side = TOP)
+frame01.pack(side = TOP)
 frame1.pack(side = TOP)
 frame2.pack(side = TOP)
 frame3.pack(side = TOP)
@@ -100,6 +113,43 @@ b1 = Button(frame0, text="Reset gains", command=resetCommand)
 b1.pack(side=RIGHT)
 b2 = Button(frame0, text="Sync",command=syncCommand)
 b2.pack(side=RIGHT)
+b3 = Button(frame0, text="PWM Update",command=pwmControl)
+b3.pack(side=RIGHT)
+
+#create text entries
+frameE1 = Frame(frame01)
+frameE2 = Frame(frame01)
+frameE3 = Frame(frame01)
+frameE4 = Frame(frame01)
+frameE1.pack(side = LEFT)
+frameE2.pack(side = LEFT)
+frameE3.pack(side = LEFT)
+frameE4.pack(side = LEFT)
+
+label1 = Label(frameE1,text="thrust")
+label2 = Label(frameE2,text="roll")
+label3 = Label(frameE3,text="pitch")
+label4 = Label(frameE4,text="yaw")
+label1.pack(side=TOP)
+label2.pack(side=TOP)
+label3.pack(side=TOP)
+label4.pack(side=TOP)
+
+# label1 = LabelFrame(frame01,text="Test",padx=5,pady=10)
+# label1.pack(padx=10,pady=10)
+
+e1 = Entry(frameE1,width = 10,justify=CENTER)
+e1.pack(side=RIGHT)
+e1.insert(0, "0")
+e2 = Entry(frameE2,width = 10,justify=CENTER)
+e2.pack(side=RIGHT)
+e2.insert(0, "0")
+e3 = Entry(frameE3,width = 10,justify=CENTER)
+e3.pack(side=RIGHT)
+e3.insert(0, "0")
+e4 = Entry(frameE4,width = 10,justify=CENTER)
+e4.pack(side=RIGHT)
+e4.insert(0, "0")
 
 #insert the scales into the appropriate frames and associate to your desired variable
 scale1 = Scale(frame1, label = 'kPThrust', variable = var1, from_ = 0.00, to = 5.00, length=sliderLength, resolution=0.01, command = publishData)

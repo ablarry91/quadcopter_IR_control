@@ -31,7 +31,7 @@
 <!-- 	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/> -->
 
 	<node pkg="usb_cam" type="usb_cam_node" name="usb_cam" output="screen" >
-		<param name="video_device" type="string" value="/dev/video1"/>
+		<param name="video_device" type="string" value="/dev/video0"/>
 		<param name="image_width" type="int" value="640" />
 		<param name="image_height" type="int" value="480" />
 		<param name="pixel_format" type="string" value="yuyv"/>

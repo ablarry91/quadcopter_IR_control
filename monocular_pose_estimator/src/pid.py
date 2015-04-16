@@ -49,7 +49,7 @@ def pid(meas, target):
 	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
 		roll = np.pi+(np.pi+roll)
 		print "INVERTING"
-	print roll
+	# print roll
 	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
@@ -58,6 +58,7 @@ def pid(meas, target):
 	inputs[0,0] = inputs[0,0] + meas.pose.pose.position.z - target.position.z
 	inputs[0,1] = meas.pose.pose.position.z - target.position.z - inputs[0,2]
 	inputs[0,2] = meas.pose.pose.position.z - target.position.z
+	print "z = ",meas.pose.pose.position.z
 
 	inputs[1,0] = inputs[1,0] + rollPitchE[0,0] - target.position.x
 	inputs[1,1] = rollPitchE[0,0] - target.position.x - inputs[1,2]
@@ -76,7 +77,7 @@ def pid(meas, target):
 	# print k
 	u0 = np.dot(k[0,:],np.transpose(inputs[0,:]))
 	u1 = np.dot(k[1,:],np.transpose(inputs[1,:]))
-	print u1
+	# print u1
 	u2 = np.dot(k[2,:],np.transpose(inputs[2,:]))
 	u3 = np.dot(k[3,:],np.transpose(inputs[3,:]))
 	u = np.array([u0,u1,u2,u3])
