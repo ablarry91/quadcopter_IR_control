@@ -68,7 +68,7 @@ def pwmControl():
 	data4 = int(e4.get())
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data1,data2,data3,data4]
-	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	rospy.loginfo("PWM published: %s\n    ", dataOut)
 	pwm.publish(dataOut)
 
 #create the GUI window
@@ -134,9 +134,6 @@ label1.pack(side=TOP)
 label2.pack(side=TOP)
 label3.pack(side=TOP)
 label4.pack(side=TOP)
-
-# label1 = LabelFrame(frame01,text="Test",padx=5,pady=10)
-# label1.pack(padx=10,pady=10)
 
 e1 = Entry(frameE1,width = 10,justify=CENTER)
 e1.pack(side=RIGHT)

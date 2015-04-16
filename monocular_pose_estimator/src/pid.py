@@ -109,6 +109,12 @@ def publish(data):
 	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
 	pub.publish(dataOut)
 
+def manualPublish(data):
+	dataOut = UInt8MultiArray()
+	dataOut.data = [data.data[0],data.data[1],data.data[2],data.data[3]]
+	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	pub.publish(data)
+
 # the GUI runs from a kTinker node and is mostly responsible for adjusting gains, and starting/stopping the controller
 def GUI(data):
 	for i in range(len(data.data)):
@@ -151,6 +157,7 @@ def listener():
 	rospy.Subscriber("killCommand",Bool, kill)
 	rospy.Subscriber("resetCommand", Bool, resetCommand)
 	rospy.Subscriber("syncCommand", Bool, sync)
+	rospy.Subscriber("pwmInput",UInt8MultiArray,manualPublish)
 
 	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
