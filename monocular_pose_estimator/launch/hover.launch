@@ -1,6 +1,7 @@
 <launch> 
 
 	<!-- Name of the YAML file containing the marker positions -->
+	<!-- <arg name="YAML_file_name" default="demo_marker_positions"/> -->
 	<arg name="YAML_file_name" default="hover_marker_positions"/>
 
 	<!-- File containing the the marker positions in the trackable's frame of reference -->
@@ -15,8 +16,8 @@
 			<param name= "max_blob_area" value = "200" />
 			<param name= "max_width_height_distortion" value = "0.5" />
 			<param name= "max_circular_distortion" value = "0.5" />
-			<param name= "back_projection_pixel_tolerance" value = "3" />
-			<param name= "nearest_neighbour_pixel_tolerance" value = "5" />
+			<param name= "back_projection_pixel_tolerance" value = "5" />
+			<param name= "nearest_neighbour_pixel_tolerance" value = "7" />
 			<param name= "certainty_threshold" value = "0.75" />
 			<param name= "valid_correspondence_threshold" value = "0.7" />
 		</node>
@@ -24,8 +25,13 @@
 		<node name="view_visualisation_image" pkg="image_view" type="image_view" args="image:=/monocular_pose_estimator/image_with_detections" />
 	</group>
 
+	<!-- rosbag play -->
+	<!-- <node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/> -->
+	
+<!-- 	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/> -->
+
 	<node pkg="usb_cam" type="usb_cam_node" name="usb_cam" output="screen" >
-		<param name="video_device" type="string" value="/dev/video1"/>
+		<param name="video_device" type="string" value="/dev/video0"/>
 		<param name="image_width" type="int" value="640" />
 		<param name="image_height" type="int" value="480" />
 		<param name="pixel_format" type="string" value="yuyv"/>
@@ -35,15 +41,19 @@
       value="file:///home/ablarry91/.ros/camera_info/head_camera.yaml" />
 	</node>
 
+	<node pkg="monocular_pose_estimator" type="pid.py" name="pid" output="screen" >
+	</node>
 
-<!-- <node pkg="monocular_pose_estimator" type="threshold_image.py" name="image_convert" output="screen" respawn="false" >
-	</node> -->
-	
-<node name="raw_image" pkg="image_view" type="image_view" args="image:=/usb_cam/image_raw" />
+	<node pkg="monocular_pose_estimator" type="Tkinter_GUI.py" name="GUI" output="screen" >
+	</node>
 
-<!-- <node name="binary_image" pkg="image_view" type="image_view" args="image:=/binary_image" /> -->
+	<node pkg="rosserial_python" type="serial_node.py" name="microcontroller">
+		<param name="port" value="/dev/ttyACM0"/>
+		<param name="baud" value="57600"/>
+	</node>
 
+  <node ns="usb_cam" pkg="image_proc" type="image_proc" name="image_proc"/>
 
-	<!-- rosbag play 
-	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/>     -->
+<node name="raw_image" pkg="image_view" type="image_view" args="image:=/usb_cam/image_rect" />
+
 </launch>
