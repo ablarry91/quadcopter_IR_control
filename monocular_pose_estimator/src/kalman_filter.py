@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String,Float32
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 import numpy as np
 
@@ -9,7 +9,7 @@ currentPos = [0,0,0,0,0,0,0] #x,y,z,x,y,z,w
 def poseUpdate(data):
 	"""This function is called when the pose estimator publishes a coordinate update.  It will likely publish slower than we'd like in the context of controlling a quadcopter, which is why we create a separate publisher to estimate pose and publish more frequently."""
 
-	pub = rospy.Publisher('filter_output', String, queue_size=10)
+	# pub = rospy.Publisher('filter_output', String, queue_size=10)
 	# hello_str = "should be slow %s" % rospy.get_time()
 	# rospy.loginfo(hello_str)
 	# pub.publish(hello_str)
@@ -20,11 +20,6 @@ def poseUpdate(data):
 	currentPos[4] = data.pose.pose.orientation.y
 	currentPos[5] = data.pose.pose.orientation.z
 	currentPos[6] = data.pose.pose.orientation.w
-
-def poseOutput():
-	"""This function is called at a higher frequency than poseUpdate.  It implements a linear kalman filter to try and estimate the quad's pose when data is noisy, unavailable, or slow."""
-	pass
-
 
 def kalmanVel():
 	rospy.init_node('filter_node', anonymous=True)
@@ -38,18 +33,13 @@ def kalmanVel():
 	Q = np.matrix([[q,0,0,0],[0,q,0,0],[0,0,q,0],[0,0,0,q]])
 	r=100
 	R = np.matrix([[r,0],[0,r]])
+
+	#constants
+	F = np.matrix([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]])  #constant vel
+	H = np.matrix([[1,0,0,0],[0,1,0,0]])
 	
+	#keep looping until all hell breaks loose
 	while not rospy.is_shutdown():
-
-		pub = rospy.Publisher('filter_test', String, queue_size=10)
-
-		# hello_str = "should be fast %s" % rospy.get_time()
-		# rospy.loginfo(hello_str)
-		# pub.publish(hello_str)
-			#constants
-
-		F = np.matrix([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]])  #constant vel
-		H = np.matrix([[1,0,0,0],[0,1,0,0]])
 
 		#state prediction
 		statePred = F*posEst
@@ -69,24 +59,20 @@ def kalmanVel():
 		posEst = statePred+gain*innovation
 		cov = (np.identity(4)-gain*H)*statePredCov
 
-		# try:
-		# 	estimation = np.vstack((estimation,np.transpose(posEst)))
-		# except:
-		# 	estimation = np.transpose(posEst)
-
+		#get your final result
 		estimation = np.transpose(posEst)
-		print "estimation is", estimation
+		# print "estimation is", estimation
 
+		pub = rospy.Publisher('filter_output', Float32, queue_size=10)
+		test = Float32()
+		test.data = estimation[0,0]
+		# test.data = 5
+		pub.publish(test)
+		# hello_str = "should be fast %s" % rospy.get_time()
+		# rospy.loginfo(hello_str)
+		# pub.publish(hello_str)
 
-		# plotData(truthData,measData,estimation,"Kalman Filter - Constant Velocity")
-
-		# return truthData,measData,estimation
-
-
-
-
-
-		poseOutput()
+		#wait at prescribed frequency
 		rate.sleep()
 
 if __name__ == '__main__':

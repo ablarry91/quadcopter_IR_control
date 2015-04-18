@@ -4,6 +4,10 @@
 	<!-- <arg name="YAML_file_name" default="demo_marker_positions"/> -->
 	<arg name="YAML_file_name" default="hover_marker_positions"/>
 
+	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag" >
+		<param name="use_sim_time" value="true" />
+	</node>
+
 	<!-- File containing the the marker positions in the trackable's frame of reference -->
 	<arg name="marker_positions_file" default="$(find monocular_pose_estimator)/marker_positions/$(arg YAML_file_name).yaml"/> 
 
@@ -27,8 +31,6 @@
 
 	<!-- rosbag play -->
 	<!-- <node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/test_data.bag"/> -->
-	
-	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/>
 
 	<node pkg="monocular_pose_estimator" type="kalman_filter.py" name="kalman_filter" output="screen" >
 	</node>
@@ -44,8 +46,11 @@
 		<param name="baud" value="57600"/>
 	</node>
 
-  <node ns="usb_cam" pkg="image_proc" type="image_proc" name="image_proc"/>
+ 	<node ns="usb_cam" pkg="image_proc" type="image_proc" name="image_proc"/>
 
-<node name="raw_image" pkg="image_view" type="image_view" args="image:=/usb_cam/image_rect" />
+	<node name="raw_image" pkg="image_view" type="image_view" args="image:=/usb_cam/image_rect" />
+
+	<node pkg="rqt_plot" type="rqt_plot" name="plot" output="screen" >
+	</node>
 
 </launch>
