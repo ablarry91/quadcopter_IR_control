@@ -23,71 +23,71 @@ def poseUpdate(data):
 
 def poseOutput():
 	"""This function is called at a higher frequency than poseUpdate.  It implements a linear kalman filter to try and estimate the quad's pose when data is noisy, unavailable, or slow."""
+	pass
 
-	# data = getData(directory)
-	# [truthData,measData] = parseData(data)
 
-	#constants
-	F = np.matrix([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]])  #constant vel
-	H = np.matrix([[1,0,0,0],[0,1,0,0]])
+def kalmanVel():
+	rospy.init_node('filter_node', anonymous=True)
+	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, poseUpdate)
+	rate = rospy.Rate(100) # 10hz
 
-	#initializers
+	#initializers for the kalman filter
 	posEst = np.transpose(np.matrix([0,50,10,10]))
 	cov = np.identity(4)  #just a guess
 	q=.01
 	Q = np.matrix([[q,0,0,0],[0,q,0,0],[0,0,q,0],[0,0,0,q]])
 	r=100
 	R = np.matrix([[r,0],[0,r]])
-
-	#state prediction
-	statePred = F*posEst
-	statePredCov = F*cov*np.transpose(F)+Q
-
-	#measurement prediction
-	measPred = H*statePred
-	measPredCov = H*statePredCov*np.transpose(H)+R	
-
-	#associate the data together
-	measurement = np.matrix(measData[i])
-	measurement = np.transpose(measurement)
-	innovation = measurement-measPred
-
-	#update
-	gain = statePredCov*np.transpose(H)*np.linalg.inv(measPredCov)
-	posEst = statePred+gain*innovation
-	cov = (np.identity(4)-gain*H)*statePredCov
-
-	try:
-		estimation = np.vstack((estimation,np.transpose(posEst)))
-	except:
-		estimation = np.transpose(posEst)
-
-	plotData(truthData,measData,estimation,"Kalman Filter - Constant Velocity")
-
-	return truthData,measData,estimation
-
-	pub = rospy.Publisher('filter_test', String, queue_size=10)
-
-
-
-
-
-
-	# hello_str = "should be fast %s" % rospy.get_time()
-	# rospy.loginfo(hello_str)
-	# pub.publish(hello_str)
-
-
-
-
-def talker():
-	rospy.init_node('filter_node', anonymous=True)
-	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, poseUpdate)
-	rate = rospy.Rate(100) # 10hz
 	
 	while not rospy.is_shutdown():
+
+		pub = rospy.Publisher('filter_test', String, queue_size=10)
+
+		# hello_str = "should be fast %s" % rospy.get_time()
+		# rospy.loginfo(hello_str)
+		# pub.publish(hello_str)
+			#constants
+
+		F = np.matrix([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]])  #constant vel
+		H = np.matrix([[1,0,0,0],[0,1,0,0]])
+
+		#state prediction
+		statePred = F*posEst
+		statePredCov = F*cov*np.transpose(F)+Q
+
+		#measurement prediction
+		measPred = H*statePred
+		measPredCov = H*statePredCov*np.transpose(H)+R	
+
+		#associate the data together
+		measurement = np.matrix([currentPos[0],currentPos[1]])
+		measurement = np.transpose(measurement)
+		innovation = measurement-measPred
+
+		#update
+		gain = statePredCov*np.transpose(H)*np.linalg.inv(measPredCov)
+		posEst = statePred+gain*innovation
+		cov = (np.identity(4)-gain*H)*statePredCov
+
+		# try:
+		# 	estimation = np.vstack((estimation,np.transpose(posEst)))
+		# except:
+		# 	estimation = np.transpose(posEst)
+
+		estimation = np.transpose(posEst)
+		print "estimation is", estimation
+
+
+		# plotData(truthData,measData,estimation,"Kalman Filter - Constant Velocity")
+
+		# return truthData,measData,estimation
+
+
+
+
+
 		poseOutput()
 		rate.sleep()
 
 if __name__ == '__main__':
-	talker()
+	kalmanVel()
