@@ -30,6 +30,8 @@
 	
 	<node pkg="rosbag" type="play" name="player" output="screen" args="-d 1 -l $(find monocular_pose_estimator)/bags/controllerTest.bag"/>
 
+	<node pkg="monocular_pose_estimator" type="kalman_filter.py" name="kalman_filter" output="screen" >
+	</node>
 
 	<node pkg="monocular_pose_estimator" type="pid.py" name="pid" output="screen" >
 	</node>
