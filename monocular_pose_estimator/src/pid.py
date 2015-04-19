@@ -142,13 +142,15 @@ def resetCommand(data):
 def sync(data):
 	"""This function must be called in order for the RF controller to connect to the quadcopter.  You should only have to call this function once per session."""
 
-	global syncData
+	global syncData,PWM
 	rospy.loginfo("SYNCING TO QUAD...")
 	syncData = False # I was hoping this could stop a subscriber from working, but no cigar
 	for i in range(255):
+		PWM[0] = i
 		publish([i,0,0,0])
 		time.sleep(0.01)
 	for i in range(255):
+		PWM[0] = 255-i
 		publish([255-i,0,0,0])
 		time.sleep(0.01)
 	syncData = True  
