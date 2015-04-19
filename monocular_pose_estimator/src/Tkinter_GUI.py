@@ -9,21 +9,7 @@ abortStatus = True #emergency stop for the quadcopter
 abortText = "Enable motors"  #is there a word for robot phobia?
 resetStatus = False #resets the gains
 
-def lostSignal(data):
-	global abortStatus
-	if data.data == True:
-		rospy.loginfo("LOST SIGNAL.  ENSURE DATA IS BEING GATHERED AND REENABLE MOTORS.")
-		abortStatus = False
-		abortCommand()
 
-#create the publishers
-pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
-kill = rospy.Publisher('killCommand', Bool, queue_size=5)
-reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
-sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
-pwm = rospy.Publisher('pwmInput', UInt8MultiArray, queue_size=5)
-rospy.Subscriber("fail_safe",Bool, lostSignal)
-rospy.init_node('tkinterGUI', anonymous=True)
 
 #any time the slider changes, this function is called
 def publishData(junk):
@@ -134,6 +120,7 @@ frameE2.pack(side = LEFT)
 frameE3.pack(side = LEFT)
 frameE4.pack(side = LEFT)
 
+#PWM labels
 label1 = Label(frameE1,text="thrust")
 label2 = Label(frameE2,text="roll")
 label3 = Label(frameE3,text="pitch")
@@ -143,6 +130,7 @@ label2.pack(side=TOP)
 label3.pack(side=TOP)
 label4.pack(side=TOP)
 
+#PWM values being sent to quad
 e1 = Entry(frameE1,width = 10,justify=CENTER)
 e1.pack(side=RIGHT)
 e1.insert(0, "0")
@@ -194,5 +182,36 @@ scale12 = Scale(frame4, label = 'kdYaw', variable = var12, from_ = 0, to = 5, le
 scale12.set(0)
 scale12.pack(side=LEFT)
 
+def lostSignal(data):
+	global abortStatus
+	if data.data == True:
+		rospy.loginfo("LOST SIGNAL.  ENSURE DATA IS BEING GATHERED AND REENABLE MOTORS.")
+		abortStatus = False
+		abortCommand()
+
+def updatePWM(data):
+	e1.delete(0, END)
+	e2.delete(0, END)
+	print "thrust is",data.data
+	print "yaw is ",data.data[1]
+	print data
+	# e1.insert(0, int(data.data[0]))
+	# e2.insert(0, int(data.data[1]))
+	# e3.insert(0, str(data.data[2]))
+	# e4.insert(0, str(data.data[3]))
+	# print "data is",int(data.data[1])
+	# print "data is",str(data.data[1])
+
+#create the publishers
+pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
+kill = rospy.Publisher('killCommand', Bool, queue_size=5)
+reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
+sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
+pwm = rospy.Publisher('pwmInput', UInt8MultiArray, queue_size=5)
+rospy.Subscriber("fail_safe",Bool, lostSignal)
+# rospy.Subscriber("pwm_control", UInt8MultiArray, updatePWM)
+rospy.init_node('tkinterGUI', anonymous=True)
+
 #run the loop indefinitely
 root.mainloop()
+

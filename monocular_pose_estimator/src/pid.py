@@ -19,7 +19,7 @@ target.orientation.w = 0
 k = np.zeros([4,3])  #4x3 atrix of PID gains, for thrust, roll, pitch, yaw
 inputs = np.zeros([4,3]) #4x3 matrix of integrator error, differential error, and previous error, respectively.  4 channels.
 maxI = np.zeros([.5,.5,.5,.5]) #max integrator error
-PWM = np.array([0,255,255,255]) #the integer PWM values sent over to an arduino
+PWM = np.array([0,127,127,127]) #the integer PWM values sent over to an arduino
 wait = True #toggled with a button, stops the PID controller from publishing PWM signals if necessary
 syncData = True #used for connecting the RF controller to the quad.  You should only have to do this once every session.
 upperLimit = 255  #upper limit for PWM command that can be published
@@ -36,10 +36,10 @@ def pid(meas, target):
 	global maxI, PWM, inputs
 
 	# Convert quaternion to euler
-	q0 = meas.pose.pose.orientation.x
-	q1 = meas.pose.pose.orientation.y
-	q2 = meas.pose.pose.orientation.z
-	q3 = meas.pose.pose.orientation.w
+	q0 = meas.orientation.x
+	q1 = meas.orientation.y
+	q2 = meas.orientation.z
+	q3 = meas.orientation.w
 	roll = np.arctan2(2*(q0*q1+q2*q3),1-2*(q1**2+q2**2))
 	pitch = np.arcsin(2*(q0*q2-q3*q1))
 	yaw = np.arctan2(2*(q0*q3+q1*q2),1-2*(q2**2+q3**3))
@@ -47,16 +47,16 @@ def pid(meas, target):
 
 	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
 		roll = np.pi+(np.pi+roll)
-		print "INVERTING"
+		rospy.loginfo("INVERTING.")
 
 	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
-	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
+	rollPitchE = np.dot(rotation, np.array([meas.position.x, meas.position.y])) #roll and pitch error
 
 	# Update PID controls.  This is really onerous, I know
-	inputs[0,0] = inputs[0,0] + meas.pose.pose.position.z - target.position.z
-	inputs[0,1] = meas.pose.pose.position.z - target.position.z - inputs[0,2]
-	inputs[0,2] = meas.pose.pose.position.z - target.position.z
+	inputs[0,0] = inputs[0,0] + meas.position.z - target.position.z
+	inputs[0,1] = meas.position.z - target.position.z - inputs[0,2]
+	inputs[0,2] = meas.position.z - target.position.z
 	# print "z = ",meas.pose.pose.position.z
 	inputs[1,0] = inputs[1,0] + rollPitchE[0,0] - target.position.x
 	inputs[1,1] = rollPitchE[0,0] - target.position.x - inputs[1,2]
@@ -104,9 +104,11 @@ def publish(data):
 	pub.publish(dataOut)
 
 def manualPublish(data):
-	dataOut = UInt8MultiArray()
-	dataOut.data = [data.data[0],data.data[1],data.data[2],data.data[3]]
-	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	global PWM
+
+	for i in range(4):
+		PWM[i] = ord(data.data[i])
+
 	pub.publish(data)
 
 def GUI(data):
@@ -124,12 +126,14 @@ def kill(data):
 	if data.data == False:
 		wait = False
 	else:
+		rospy.loginfo("MOTOR PWM KILLED.")
 		wait = True
 
 def resetCommand(data):
 	"""Resets gains that may have accumulated, if we're resetting an experiment."""
 
 	global thrustI, thrustD, thrustPrev, PWM
+	rospy.loginfo("GAINS RESET TO ZERO.")
 	thrustI = 0
 	thrustD = 0
 	thrustPrev = 0
@@ -139,6 +143,7 @@ def sync(data):
 	"""This function must be called in order for the RF controller to connect to the quadcopter.  You should only have to call this function once per session."""
 
 	global syncData
+	rospy.loginfo("SYNCING TO QUAD...")
 	syncData = False # I was hoping this could stop a subscriber from working, but no cigar
 	for i in range(255):
 		publish([i,0,0,0])
@@ -147,11 +152,12 @@ def sync(data):
 		publish([255-i,0,0,0])
 		time.sleep(0.01)
 	syncData = True  
+	rospy.loginfo("SYNCING COMPLETE.")
 
 	
 def listener():
 	rospy.init_node('pid', anonymous=True)
-	rospy.Subscriber("/monocular_pose_estimator/estimated_pose", PoseWithCovarianceStamped, pidPrep)
+	rospy.Subscriber("filter_output", Pose, pidPrep)
 	rospy.Subscriber("sliderData", Float32MultiArray, GUI)
 	rospy.Subscriber("killCommand",Bool, kill)
 	rospy.Subscriber("resetCommand", Bool, resetCommand)
