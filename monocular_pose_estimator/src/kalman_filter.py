@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import String,Float32
+from std_msgs.msg import String,Float32,Float32MultiArray
 from geometry_msgs.msg import PoseWithCovarianceStamped, Pose, Point, Quaternion
 import numpy as np
 
@@ -50,10 +50,6 @@ def kalmanVel():
 	for i in range(len(h)):
 		for j in range(len(h)):
 			H[i,j] = h[i,j]
-
-
-	# F = np.matrix([[1,0,1,0],[0,1,0,1],[0,0,1,0],[0,0,0,1]])  #constant vel
-	# H = np.matrix([[1,0,0,0],[0,1,0,0]])
 	
 	#keep looping until all hell breaks loose
 	while not rospy.is_shutdown():
@@ -75,21 +71,28 @@ def kalmanVel():
 		#update
 		gain = np.dot(statePredCov,np.transpose(H))
 		gain = np.dot(gain,np.linalg.inv(measPredCov))
-		# gain = statePredCov*np.transpose(H)*np.linalg.inv(measPredCov)
 		posEst = statePred+gain*innovation
 		cov = np.identity(14) - np.dot(gain,H)
 		cov = np.dot(cov,statePredCov)
-		# cov = (np.identity(14)-gain*H)*statePredCov
 
 		#get your final result
 		estimation = np.transpose(posEst)
-		# print "estimation is", estimation
 
-		pub = rospy.Publisher('filter_output', Float32, queue_size=10)
-		test = Float32()
-		test.data = estimation[0,0]
-		# test.data = 5
-		pub.publish(test)
+		#set up the publisher
+		pub = rospy.Publisher('filter_output', Pose, queue_size=10)
+		# test = Float32()
+		# test.data = estimation[0,0]
+
+		#write to a ROS message array
+		a = Pose()
+		a.position.x = estimation[0,0]
+		a.position.y = estimation[0,1]
+		a.position.z = estimation[0,2]
+		a.orientation.x = estimation[0,3]
+		a.orientation.y = estimation[0,4]
+		a.orientation.z = estimation[0,5]
+		a.orientation.w = estimation[0,6]
+		pub.publish(a)
 		# hello_str = "should be fast %s" % rospy.get_time()
 		# rospy.loginfo(hello_str)
 		# pub.publish(hello_str)
