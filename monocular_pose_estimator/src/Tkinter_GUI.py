@@ -22,7 +22,7 @@ kill = rospy.Publisher('killCommand', Bool, queue_size=5)
 reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
 sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
 pwm = rospy.Publisher('pwmInput', UInt8MultiArray, queue_size=5)
-rospy.Subscriber("failSafe",Bool, lostSignal)
+rospy.Subscriber("fail_safe",Bool, lostSignal)
 rospy.init_node('tkinterGUI', anonymous=True)
 
 #any time the slider changes, this function is called

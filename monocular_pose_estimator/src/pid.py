@@ -53,7 +53,7 @@ def pid(meas, target):
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
 
-	# Update PID controls.  This is really onerous, I know.
+	# Update PID controls.  This is really onerous, I know
 	inputs[0,0] = inputs[0,0] + meas.pose.pose.position.z - target.position.z
 	inputs[0,1] = meas.pose.pose.position.z - target.position.z - inputs[0,2]
 	inputs[0,2] = meas.pose.pose.position.z - target.position.z
@@ -100,7 +100,7 @@ def publish(data):
 
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
-	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	# rospy.loginfo("PWM published: %s\n    ", dataOut.data)
 	pub.publish(dataOut)
 
 def manualPublish(data):
@@ -126,7 +126,6 @@ def kill(data):
 	else:
 		wait = True
 
-# resets the gains that have accumulated
 def resetCommand(data):
 	"""Resets gains that may have accumulated, if we're resetting an experiment."""
 
