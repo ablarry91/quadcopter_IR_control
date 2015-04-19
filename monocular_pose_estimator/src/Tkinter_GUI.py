@@ -13,7 +13,7 @@ def lostSignal(data):
 	global abortStatus
 	if data.data == True:
 		rospy.loginfo("LOST SIGNAL.  ENSURE DATA IS BEING GATHERED AND REENABLE MOTORS.")
-		abortStatus = True
+		abortStatus = False
 		abortCommand()
 
 #create the publishers
