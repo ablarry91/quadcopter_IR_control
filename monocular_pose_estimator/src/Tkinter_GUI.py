@@ -9,12 +9,20 @@ abortStatus = True #emergency stop for the quadcopter
 abortText = "Enable motors"  #is there a word for robot phobia?
 resetStatus = False #resets the gains
 
+def lostSignal(data):
+	global abortStatus
+	if data.data == True:
+		rospy.loginfo("LOST SIGNAL.  ENSURE DATA IS BEING GATHERED AND REENABLE MOTORS.")
+		abortStatus = True
+		abortCommand()
+
 #create the publishers
 pub = rospy.Publisher('sliderData', Float32MultiArray, queue_size=20)
 kill = rospy.Publisher('killCommand', Bool, queue_size=5)
 reset = rospy.Publisher('resetCommand', Bool, queue_size=5)
 sync = rospy.Publisher('syncCommand', Bool, queue_size=5)
 pwm = rospy.Publisher('pwmInput', UInt8MultiArray, queue_size=5)
+rospy.Subscriber("failSafe",Bool, lostSignal)
 rospy.init_node('tkinterGUI', anonymous=True)
 
 #any time the slider changes, this function is called

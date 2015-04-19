@@ -34,7 +34,6 @@ def pidPrep(data):
 
 def pid(meas, target):
 	global maxI, PWM, inputs
-	# rospy.loginfo("I heard %s", meas.pose.pose.position)
 
 	# Convert quaternion to euler
 	q0 = meas.pose.pose.orientation.x
@@ -49,43 +48,38 @@ def pid(meas, target):
 	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
 		roll = np.pi+(np.pi+roll)
 		print "INVERTING"
-	# print roll
+
 	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
 	rollPitchE = np.dot(rotation, np.array([meas.pose.pose.position.x, meas.pose.pose.position.y])) #roll and pitch error
 
-	# Update controls.  This is really stupid, I know.
+	# Update PID controls.  This is really onerous, I know.
 	inputs[0,0] = inputs[0,0] + meas.pose.pose.position.z - target.position.z
 	inputs[0,1] = meas.pose.pose.position.z - target.position.z - inputs[0,2]
 	inputs[0,2] = meas.pose.pose.position.z - target.position.z
-	print "z = ",meas.pose.pose.position.z
-
+	# print "z = ",meas.pose.pose.position.z
 	inputs[1,0] = inputs[1,0] + rollPitchE[0,0] - target.position.x
 	inputs[1,1] = rollPitchE[0,0] - target.position.x - inputs[1,2]
 	inputs[1,2] = rollPitchE[0,0] - target.position.x
-
 	inputs[2,0] = inputs[2,0] + rollPitchE[0,1] - target.position.y
 	inputs[2,1] = rollPitchE[0,1] - target.position.y - inputs[2,2]
 	inputs[2,2] = rollPitchE[0,1] - target.position.y
-
 	inputs[3,0] = inputs[3,0] + yaw
 	inputs[3,1] = yaw - inputs[3,2]
 	inputs[3,2] = yaw
-	# print inputs
 
 	# PID equation
-	# print k
 	u0 = np.dot(k[0,:],np.transpose(inputs[0,:]))
 	u1 = np.dot(k[1,:],np.transpose(inputs[1,:]))
-	# print u1
 	u2 = np.dot(k[2,:],np.transpose(inputs[2,:]))
 	u3 = np.dot(k[3,:],np.transpose(inputs[3,:]))
 	u = np.array([u0,u1,u2,u3])
+
 	# # Integrator anti windup in case it grows too much
 	# if thrustI > maxI:
 	# 	thrustI = maxI
 	
-	# Convert for PWM
+	# Convert to PWM and be mindful of limits
 	for i in range(len(PWM)):
 		val = PWM[i] + int(u[i])
 		if val > upperLimit:
@@ -101,9 +95,9 @@ def pid(meas, target):
 	elif wait == False:
 		publish(PWM)
 
-# publishes to the arduino
 def publish(data):
-	# print data
+	"""Publishes PWM values to the microcontroller"""
+
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
 	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
@@ -115,14 +109,17 @@ def manualPublish(data):
 	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
 	pub.publish(data)
 
-# the GUI runs from a kTinker node and is mostly responsible for adjusting gains, and starting/stopping the controller
 def GUI(data):
+	"""This is called any time the GUI reports one of the K gains for the PID controller being changed"""
+
 	for i in range(len(data.data)):
 		# for j in range(len(data.data)):
 		# k[i%4-4,j%3-3] = data.data[i]
 		k[np.floor(i/3),i%3-3] = data.data[i]
-# turns PWM to 0 if called    
+   
 def kill(data):
+	"""This switches PWM values to zero if reported by the GUI, as a safety precaution."""
+
 	global wait
 	if data.data == False:
 		wait = False
@@ -131,14 +128,17 @@ def kill(data):
 
 # resets the gains that have accumulated
 def resetCommand(data):
+	"""Resets gains that may have accumulated, if we're resetting an experiment."""
+
 	global thrustI, thrustD, thrustPrev, PWM
 	thrustI = 0
 	thrustD = 0
 	thrustPrev = 0
 	PWM = np.zeros([4])
 
-# necessary to be called once for each session, to sync the RF controller to the quadcopter
 def sync(data):
+	"""This function must be called in order for the RF controller to connect to the quadcopter.  You should only have to call this function once per session."""
+
 	global syncData
 	syncData = False # I was hoping this could stop a subscriber from working, but no cigar
 	for i in range(255):
@@ -159,7 +159,6 @@ def listener():
 	rospy.Subscriber("syncCommand", Bool, sync)
 	rospy.Subscriber("pwmInput",UInt8MultiArray,manualPublish)
 
-	# spin() simply keeps python from exiting until this node is stopped
 	rospy.spin()
 
 if __name__ == '__main__':

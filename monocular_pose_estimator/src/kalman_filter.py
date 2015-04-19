@@ -72,8 +72,6 @@ def kalmanVel():
 
 		#set up the publisher
 		pub = rospy.Publisher('filter_output', Pose, queue_size=10)
-		# test = Float32()
-		# test.data = estimation[0,0]
 
 		#write to a ROS message array
 		a = Pose()
@@ -152,8 +150,6 @@ def kalmanAccel():
 
 		#set up the publisher
 		pub = rospy.Publisher('filter_output', Pose, queue_size=10)
-		# test = Float32()
-		# test.data = estimation[0,0]
 
 		#write to a ROS message array
 		a = Pose()
@@ -170,4 +166,4 @@ def kalmanAccel():
 		rate.sleep()
 
 if __name__ == '__main__':
-	kalmanAccel()
+	kalmanVel()

@@ -53,4 +53,7 @@
 	<node pkg="rqt_plot" type="rqt_plot" name="plot" output="screen" >
 	</node>
 
+	<node pkg="monocular_pose_estimator" type="fail_safe.py" name="failSafe" output="screen" >
+	</node>
+
 </launch>
