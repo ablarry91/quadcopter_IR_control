@@ -47,7 +47,7 @@ def pid(meas, target):
 
 	if roll < 0:  #this is a hack to deal with a singularity scenario.  please dont judge
 		roll = np.pi+(np.pi+roll)
-		rospy.loginfo("INVERTING.")
+		# rospy.loginfo("INVERTING.")
 
 	# calculate the roll and pitch corrections needed using a 2D rigid transformation
 	rotation = np.matrix([[np.cos(np.radians(yaw)),np.sin(np.radians(yaw))],[-np.sin(np.radians(yaw)),np.cos(np.radians(yaw))]])
@@ -100,7 +100,7 @@ def publish(data):
 
 	dataOut = UInt8MultiArray()
 	dataOut.data = [data[0],data[1],data[2],data[3]]
-	# rospy.loginfo("PWM published: %s\n    ", dataOut.data)
+	rospy.loginfo("PWM published: %s\n    ", dataOut.data)
 	pub.publish(dataOut)
 
 def manualPublish(data):

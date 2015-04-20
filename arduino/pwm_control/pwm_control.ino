@@ -28,6 +28,14 @@ void setup()
   pinMode(10, OUTPUT);  //roll
   pinMode(9, OUTPUT);   //pitch
   pinMode(6, OUTPUT);   //yaw
+  
+  //increase the clock speed to about 30 MHz
+  //  TCCR1B = TCCR1B & B11111000 | B00000001; 
+
+  TCCR2B = TCCR2B & 0b11111000 | 0x03;
+  TCCR1B = TCCR1B & 0b11111000 | 0x03;
+  TCCR0B = TCCR0B & 0b11111000 | 0x03;
+    
   nh.initNode();
   nh.subscribe(sub);
 }
